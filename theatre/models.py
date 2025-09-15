@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
@@ -87,7 +87,7 @@ class Performance(models.Model):
 
 class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reservations")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reservations")
 
     class Meta:
         verbose_name = "reservation"
