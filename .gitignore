@@ -1,7 +1,8 @@
-- venv/.venv
-- pycache/
-- *.pyc
-- .idea/
-- .env
-- media/
-- staticfiles
+venv/
+.venv/
+__pycache__/
+*.pyc
+.idea/
+.env
+media/
+staticfiles
