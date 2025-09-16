@@ -52,7 +52,7 @@ class PlayViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = Play.objects.prefetch_related("genres", "actors")
+    queryset = Play.objects.prefetch_related("genres", "actors").order_by("title")
     serializer_class = PlaySerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
@@ -136,7 +136,7 @@ class PerformanceViewSet(
                 F("theatre_hall__rows") * F("theatre_hall__seats_in_row")
                 - Count("tickets")
             )
-        )
+        ).order_by("-show_time")
     )
     serializer_class = PerformanceSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
@@ -198,7 +198,7 @@ class ReservationViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = Reservation.objects.prefetch_related("tickets__performance__play", "tickets__performance__theatre_hall")
+    queryset = Reservation.objects.prefetch_related("tickets__performance__play", "tickets__performance__theatre_hall").order_by("-created_at")
     serializer_class = ReservationSerializer
     pagination_class = ReservationPagination
     permission_classes = (permissions.IsAuthenticated,)
@@ -212,4 +212,4 @@ class ReservationViewSet(
         return ReservationSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save()

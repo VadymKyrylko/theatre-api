@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.timezone import now
 from rest_framework import serializers
 
 from theatre.models import Actor, Genre, Play, TheatreHall, Performance, Reservation, Ticket
@@ -87,6 +88,9 @@ class PerformanceListSerializer(serializers.ModelSerializer):
 class TicketSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        performance = attrs["performance"]
+        if performance.show_time < now():
+            raise serializers.ValidationError("Cannot reserve tickets for past performances!")
         if Ticket.objects.filter(
             performance=attrs["performance"],
             row=attrs["row"],
@@ -139,7 +143,8 @@ class ReservationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
-            reservation = Reservation.objects.create(**validated_data)
+            user = self.context["request"].user
+            reservation = Reservation.objects.create(user=user, **validated_data)
             for ticket_data in tickets_data:
                 Ticket.objects.create(reservation=reservation, **ticket_data)
             return reservation
