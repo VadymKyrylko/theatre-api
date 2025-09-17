@@ -1,8 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
 
 class UserModelTests(TestCase):
     def test_create_user(self):
@@ -19,7 +20,9 @@ class UserModelTests(TestCase):
         self.assertEqual(user.email, email.lower())
 
     def test_create_superuser(self):
-        user = User.objects.create_superuser(email="admin@example.com", password="adminpass123")
+        user = User.objects.create_superuser(
+            email="admin@example.com", password="adminpass123"
+        )
         self.assertEqual(user.is_superuser, True)
         self.assertEqual(user.is_staff, True)
 

@@ -1,5 +1,5 @@
-from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 
 from user.serializers import UserSerializer
 
@@ -10,8 +10,8 @@ class UserSerializerTests(TestCase):
     def setUp(self):
         self.password = "testpass123"
         self.user = User.objects.create_user(
-            email = "test@example.com",
-            password = self.password,
+            email="test@example.com",
+            password=self.password,
         )
 
     def test_create_user_successful(self):
@@ -42,7 +42,11 @@ class UserSerializerTests(TestCase):
         self.assertTrue(updated_user.check_password(data["password"]))
 
     def test_is_staff_read_only(self):
-        data = {"email": "staff@example.com", "password": "pass123", "is_staff": True}
+        data = {
+            "email": "staff@example.com",
+            "password": "pass123",
+            "is_staff": True
+        }
         serializer = UserSerializer(data=data)
         self.assertTrue(serializer.is_valid(), serializer.errors)
         user = serializer.save()

@@ -1,20 +1,26 @@
-from django.urls import reverse
-from rest_framework.test import APITestCase
-from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 User = get_user_model()
+
 
 class UserApiTests(APITestCase):
     def setUp(self):
         self.password = "testpass123"
-        self.user = User.objects.create_user(email="test@example.com", password=self.password)
+        self.user = User.objects.create_user(
+            email="test@example.com", password=self.password
+        )
         self.register_url = reverse("user:create")
         self.me_url = reverse("user:manage")
         self.token_url = reverse("user:token_obtain_pair")
 
     def authenticate_user(self):
-        res = self.client.post(self.token_url, {"email": self.user.email, "password": self.password} )
+        res = self.client.post(
+            self.token_url,
+            {"email": self.user.email, "password": self.password}
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         token = res.data["access"]
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
@@ -35,12 +41,17 @@ class UserApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_token_obtain_success(self):
-        res = self.client.post(self.token_url, {"email": self.user.email, "password": self.password})
+        res = self.client.post(
+            self.token_url,
+            {"email": self.user.email, "password": self.password}
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("access", res.data)
 
     def test_token_obtain_invalid_credentials(self):
-        res = self.client.post(self.token_url, {"email": self.user.email, "password": "wrongpass"})
+        res = self.client.post(
+            self.token_url, {"email": self.user.email, "password": "wrongpass"}
+        )
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_manage_user_unauthorized(self):
