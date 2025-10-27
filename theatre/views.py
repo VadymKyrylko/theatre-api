@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import List, Type, Any
 
-from django.db.models import Count, F
+from django.db.models import Count, F, QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, permissions, status, viewsets
@@ -8,7 +9,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 
 from theatre.models import (Actor, Genre, Performance, Play, Reservation,
                             TheatreHall)
@@ -58,17 +61,17 @@ class PlayViewSet(
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     @staticmethod
-    def _params_to_ints(queryset):
+    def _params_to_ints(queryset: str) -> List[int]:
         """Convert a list of string IDs to a list of integers."""
         return [int(str_id) for str_id in queryset.split(",")]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Play]:
         """Retrieve the plays with filters."""
-        title = self.request.query_params.get("title")
-        genres = self.request.query_params.get("genres")
-        actors = self.request.query_params.get("actors")
+        title: str | None = self.request.query_params.get("title")
+        genres: str | None = self.request.query_params.get("genres")
+        actors:  str | None = self.request.query_params.get("actors")
 
-        queryset = self.queryset
+        queryset: QuerySet[Play] = self.queryset
         if title:
             queryset = queryset.filter(title__icontains=title)
         if genres:
@@ -79,7 +82,7 @@ class PlayViewSet(
             queryset = queryset.filter(actors__id__in=actors_ids)
         return queryset.distinct()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[BaseSerializer]:
         if self.action == "list":
             return PlayListSerializer
         if self.action == "retrieve":
@@ -94,15 +97,14 @@ class PlayViewSet(
         url_path="upload-image",
         permission_classes=[IsAdminUser],
     )
-    def upload_image(self, request, pk=None):
+    def upload_image(self, request: Request, pk: int | None = None) -> Response:
         """Endpoint for uploading an image to specific play"""
         play = self.get_object()
         serializer = self.get_serializer(play, data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         parameters=[
@@ -123,7 +125,7 @@ class PlayViewSet(
             ),
         ]
     )
-    def list(self, request, *args, **kwargs):
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         return super().list(request, *args, **kwargs)
 
 
@@ -142,11 +144,11 @@ class PerformanceViewSet(viewsets.ModelViewSet):
     serializer_class = PerformanceSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    def get_queryset(self):
-        date = self.request.query_params.get("date")
-        play_id_str = self.request.query_params.get("play")
+    def get_queryset(self) -> QuerySet[Performance]:
+        date: str | None = self.request.query_params.get("date")
+        play_id_str: str | None = self.request.query_params.get("play")
 
-        queryset = self.queryset
+        queryset: QuerySet[Performance] = self.queryset
 
         if date:
             try:
@@ -163,7 +165,7 @@ class PerformanceViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(play_id=int(play_id_str))
         return queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[BaseSerializer]:
         if self.action == "list":
             return PerformanceListSerializer
         if self.action == "retrieve":
@@ -185,7 +187,7 @@ class PerformanceViewSet(viewsets.ModelViewSet):
             ),
         ]
     )
-    def list(self, request, *args, **kwargs):
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         return super().list(request, *args, **kwargs)
 
 
@@ -205,13 +207,13 @@ class ReservationViewSet(
     pagination_class = ReservationPagination
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Reservation]:
         return self.queryset.filter(user=self.request.user)
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[BaseSerializer]:
         if self.action == "list":
             return ReservationListSerializer
         return ReservationSerializer
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer: BaseSerializer) -> None:
         serializer.save()
