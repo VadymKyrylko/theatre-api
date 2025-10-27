@@ -1,5 +1,6 @@
 import os
 import uuid
+from typing import Type, Any, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -7,11 +8,11 @@ from django.db import models
 from django.utils.text import slugify
 
 
-def play_image_file_path(instance, filename):
+def play_image_file_path(instance: "Play", filename: str) -> str:
     _, extension = os.path.splitext(filename)
     filename = f"{slugify(instance.title)}-{uuid.uuid4()}{extension}"
 
-    return os.path.join("uploads/plays/", filename)
+    return os.path.join("uploads", "plays/", filename)
 
 
 class Actor(models.Model):
@@ -23,11 +24,11 @@ class Actor(models.Model):
         verbose_name_plural = "actors"
         ordering = ("last_name", "first_name")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
 
@@ -38,7 +39,7 @@ class Genre(models.Model):
         verbose_name = "genre"
         verbose_name_plural = "genres"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name}"
 
 
@@ -55,7 +56,7 @@ class Play(models.Model):
         verbose_name = "play"
         verbose_name_plural = "plays"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.title}"
 
 
@@ -68,7 +69,7 @@ class TheatreHall(models.Model):
         verbose_name = "theatre hall"
         verbose_name_plural = "theatre halls"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name}"
 
     @property
@@ -89,7 +90,7 @@ class Performance(models.Model):
         verbose_name = "performance"
         verbose_name_plural = "performances"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.play.title}: Show time: {self.show_time:%Y-%m-%d %H:%M}"
 
 
@@ -105,7 +106,7 @@ class Reservation(models.Model):
         verbose_name = "reservation"
         verbose_name_plural = "reservations"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user.username}, {self.created_at:%Y-%m-%d %H:%M}"
 
 
@@ -124,8 +125,8 @@ class Ticket(models.Model):
             row: int,
             seat: int,
             theatre_hall: TheatreHall,
-            error_to_raise
-    ):
+            error_to_raise: Type[Exception]
+    ) -> None:
         for ticket_attr_value, ticket_attr_name, theatre_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
@@ -139,7 +140,7 @@ class Ticket(models.Model):
                     }
                 )
 
-    def clean(self):
+    def clean(self) -> None:
         if Ticket.objects.filter(
             performance=self.performance, row=self.row, seat=self.seat
         ).exists():
@@ -150,18 +151,21 @@ class Ticket(models.Model):
 
     def save(
         self,
-        *args,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
-    ):
+        *args: Any,
+        force_insert: bool = False,
+        force_update: bool = False,
+        using: Optional[str] = None,
+        update_fields: Optional[list[str]] = None,
+    ) -> None:
         self.full_clean()
-        return super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"{self.performance.play.title} "
                 f"(row={self.row}, seat={self.seat})")
 
