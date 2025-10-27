@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.timezone import now
@@ -100,7 +102,7 @@ class PerformanceListSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         attrs = super().validate(attrs)
         performance = attrs["performance"]
         if performance.show_time < now():
@@ -165,9 +167,9 @@ class ReservationSerializer(serializers.ModelSerializer):
         model = Reservation
         fields = ("id", "tickets", "created_at")
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> Reservation:
         with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
+            tickets_data: list[Dict[str, Any]] = validated_data.pop("tickets")
             user = self.context["request"].user
             reservation = Reservation.objects.create(
                 user=user, **validated_data
